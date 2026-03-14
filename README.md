@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.png" alt="VaultVoice Banner" width="100%">
+</p>
+
 # VaultVoice
 
 ```
