@@ -80,37 +80,53 @@ def analyze_pitch_consistency(y: np.ndarray, sr: int) -> float:
     """
     import librosa
 
-    # Extract fundamental frequency
-    f0, voiced_flag, voiced_probs = librosa.pyin(
-        y, fmin=50, fmax=500, sr=sr
-    )
+    import librosa
 
-    if f0 is None:
-        return 0.0
-
-    # Filter out unvoiced segments
-    voiced_f0 = f0[~np.isnan(f0)]
-
-    if len(voiced_f0) < 10:
-        return 0.3  # Too short to analyze
-
-    # Check pitch variation
-    f0_std = float(np.std(voiced_f0))
-    f0_mean = float(np.mean(voiced_f0))
-
-    if f0_mean == 0:
-        return 0.5
-
-    coefficient_of_variation = f0_std / f0_mean
-
-    # Natural speech has moderate pitch variation (CV ~ 0.1-0.3)
-    # Too low = robotic, too high = glitchy
-    if coefficient_of_variation < 0.03:
-        return 0.7  # Unnaturally steady
-    elif coefficient_of_variation > 0.5:
-        return 0.6  # Unnaturally variable (glitchy)
-    else:
-        return 0.1  # Natural range
+    try:
+        # Use autocorrelation-based pitch estimation (safer than pyin)
+        # Split audio into frames and estimate pitch per frame
+        frame_length = int(0.03 * sr)  # 30ms frames
+        hop_length = int(0.01 * sr)    # 10ms hop
+        
+        pitches = []
+        for start in range(0, len(y) - frame_length, hop_length):
+            frame = y[start:start + frame_length]
+            # Autocorrelation
+            corr = np.correlate(frame, frame, mode='full')
+            corr = corr[len(corr) // 2:]
+            # Find first peak after initial decay (fundamental period)
+            min_lag = int(sr / 500)  # max 500 Hz
+            max_lag = int(sr / 50)   # min 50 Hz
+            if max_lag > len(corr):
+                continue
+            segment = corr[min_lag:max_lag]
+            if len(segment) == 0 or np.max(segment) < 0.1 * corr[0]:
+                continue
+            lag = np.argmax(segment) + min_lag
+            if lag > 0:
+                pitches.append(sr / lag)
+        
+        if len(pitches) < 5:
+            return 0.3  # Too short to analyze
+        
+        pitches = np.array(pitches)
+        f0_std = float(np.std(pitches))
+        f0_mean = float(np.mean(pitches))
+        
+        if f0_mean == 0:
+            return 0.5
+        
+        coefficient_of_variation = f0_std / f0_mean
+        
+        # Natural speech has moderate pitch variation (CV ~ 0.1-0.3)
+        if coefficient_of_variation < 0.03:
+            return 0.7  # Unnaturally steady
+        elif coefficient_of_variation > 0.5:
+            return 0.6  # Unnaturally variable
+        else:
+            return 0.1  # Natural range
+    except Exception:
+        return 0.3
 
 
 def analyze_mfcc_patterns(y: np.ndarray, sr: int) -> float:
