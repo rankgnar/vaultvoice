@@ -39,34 +39,55 @@ All processing happens locally. No cloud APIs, no data collection, no accounts.
 ### Installation
 
 ```bash
-# Clone and install
-git clone https://github.com/your-org/vaultvoice.git
+# Clone and build
+git clone https://github.com/rankgnar/vaultvoice.git
 cd vaultvoice
 npm install
 npm run build
 
-# Install Python dependencies
-pip install -r python/requirements.txt
+# Install Python dependencies (3 steps for a clean install)
+
+# Step 1: Core libraries
+pip3 install librosa numpy scipy soundfile pydub
+
+# Step 2: Speaker encoder (without heavy transitive deps)
+pip3 install --no-deps resemblyzer
+
+# Step 3: PyTorch CPU-only (lightweight ~150MB instead of ~3GB)
+pip3 install torch --index-url https://download.pytorch.org/whl/cpu
 ```
+
+> **Note:** On Ubuntu/Debian you may need to add `--break-system-packages` to each `pip3` command, or use a virtual environment:
+> ```bash
+> python3 -m venv .venv
+> source .venv/bin/activate
+> pip install librosa numpy scipy soundfile pydub
+> pip install --no-deps resemblyzer
+> pip install torch --index-url https://download.pytorch.org/whl/cpu
+> ```
+
+> **Note:** The `webrtcvad` and `typing` warnings from resemblyzer can be safely ignored — VaultVoice does not require them.
 
 ### Usage
 
 ```bash
-# Register your voice
-vaultvoice register --name "my-voice" --audio ~/recordings/my_sample.wav
+# Register your voice (record 10+ seconds first)
+node dist/cli.js register --name "my-voice" --audio my_sample.wav
 
 # Verify suspicious audio
-vaultvoice verify --profile "my-voice" --audio suspicious_call.wav
+node dist/cli.js verify --profile "my-voice" --audio suspicious_call.wav
 
 # Quick scan without a profile
-vaultvoice scan --audio unknown_audio.mp3
+node dist/cli.js scan --audio unknown_audio.mp3
 
 # List registered profiles
-vaultvoice list
+node dist/cli.js list
 
 # Delete a profile
-vaultvoice delete --name "my-voice"
+node dist/cli.js delete --name "my-voice"
 ```
+
+> **Tip:** To record audio on Linux: `arecord -d 10 -f S16_LE -r 16000 my_sample.wav`
 
 ### Example Output
 
@@ -162,6 +183,19 @@ npm test
 
 # Build for production
 npm run build
+```
+
+## Uninstall
+
+```bash
+# Remove project
+rm -rf vaultvoice
+
+# Remove stored voiceprints
+rm -rf ~/.vaultvoice
+
+# Remove Python dependencies
+pip3 uninstall resemblyzer librosa numpy scipy soundfile pydub torch -y
 ```
 
 ## License
