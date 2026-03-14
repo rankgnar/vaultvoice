@@ -63,7 +63,7 @@ export async function verifyCommand(options: { profile: string; audio: string })
     const similarity = cosineSimilarity(storedProfile.embedding, embeddingResult.embedding);
     const matchPercent = Math.max(0, Math.min(100, similarity * 100));
 
-    const isAuthentic = matchPercent >= MATCH_THRESHOLD && deepfakeResult.deepfake_score < 0.5;
+    const isAuthentic = matchPercent >= MATCH_THRESHOLD && deepfakeResult.deepfake_score < 0.65;
 
     // Display results in the exact specified format
     console.log(`Speaker Match:     ${formatSpeakerMatch(matchPercent, MATCH_THRESHOLD)}`);

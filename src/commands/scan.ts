@@ -37,7 +37,7 @@ export async function scanCommand(options: { audio: string }): Promise<void> {
 
     spinner.stop();
 
-    const isLikelyFake = deepfakeResult.deepfake_score >= 0.5;
+    const isLikelyFake = deepfakeResult.deepfake_score >= 0.65;
 
     console.log(`Deepfake Score:    ${formatDeepfakeScore(deepfakeResult.deepfake_score)}`);
 

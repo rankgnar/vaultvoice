@@ -62,13 +62,15 @@ def analyze_spectral_flatness(y: np.ndarray, sr: int) -> float:
     flatness_mean = float(np.mean(flatness))
 
     # Low variance in flatness is suspicious (too uniform)
-    # Natural speech: std typically > 0.05
-    if flatness_std < 0.02:
-        return 0.8
+    # Natural speech: std typically > 0.03
+    if flatness_std < 0.01:
+        return 0.9
+    elif flatness_std < 0.02:
+        return 0.6
     elif flatness_std < 0.04:
-        return 0.4
+        return 0.3
     else:
-        return 0.1
+        return 0.05
 
 
 def analyze_pitch_consistency(y: np.ndarray, sr: int) -> float:
@@ -144,12 +146,14 @@ def analyze_mfcc_patterns(y: np.ndarray, sr: int) -> float:
     higher_std = float(np.mean(np.std(higher_mfccs, axis=1)))
 
     # Very low variation in higher MFCCs is suspicious
-    if higher_std < 0.5:
-        return 0.7
-    elif higher_std < 1.0:
-        return 0.3
+    if higher_std < 0.3:
+        return 0.8
+    elif higher_std < 0.7:
+        return 0.4
+    elif higher_std < 1.5:
+        return 0.15
     else:
-        return 0.1
+        return 0.05
 
 
 def analyze_zcr_patterns(y: np.ndarray) -> float:
@@ -170,10 +174,12 @@ def analyze_zcr_patterns(y: np.ndarray) -> float:
     zcr_mean = float(np.mean(zcr))
 
     # Very uniform ZCR is suspicious
-    if zcr_mean > 0 and zcr_std / zcr_mean < 0.2:
-        return 0.5
+    if zcr_mean > 0 and zcr_std / zcr_mean < 0.1:
+        return 0.7
+    elif zcr_mean > 0 and zcr_std / zcr_mean < 0.2:
+        return 0.3
     else:
-        return 0.1
+        return 0.05
 
 
 def analyze_spectral_rolloff(y: np.ndarray, sr: int) -> float:
@@ -193,10 +199,12 @@ def analyze_spectral_rolloff(y: np.ndarray, sr: int) -> float:
     rolloff_mean = float(np.mean(rolloff))
 
     # Check for unnaturally consistent rolloff
-    if rolloff_mean > 0 and rolloff_std / rolloff_mean < 0.05:
-        return 0.6
+    if rolloff_mean > 0 and rolloff_std / rolloff_mean < 0.03:
+        return 0.8
+    elif rolloff_mean > 0 and rolloff_std / rolloff_mean < 0.05:
+        return 0.4
     else:
-        return 0.1
+        return 0.05
 
 
 def detect_artifacts(y: np.ndarray, sr: int) -> dict:
